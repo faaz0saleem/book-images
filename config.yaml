@@ -41,6 +41,7 @@ output:
 
 run:
   headless: true       # set false to watch the browser while debugging
+  chromium_path: null  # optional: explicit path to a Chromium binary; null = auto-detect
   request_timeout: 30  # seconds for HTTP downloads
   nav_timeout: 30      # seconds for page navigations
   delay_seconds: 4.0   # polite base delay between books

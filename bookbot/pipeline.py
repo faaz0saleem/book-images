@@ -7,7 +7,7 @@ from playwright.sync_api import sync_playwright
 from .capture import capture_from_candidates
 from .crawler import crawl_books
 from .finder import find_pdf_candidates
-from .utils import Manifest, log, polite_sleep, slugify
+from .utils import Manifest, find_chromium, log, polite_sleep, slugify
 
 
 def run(cfg: dict) -> None:
@@ -15,7 +15,12 @@ def run(cfg: dict) -> None:
     manifest = Manifest(cfg["output"]["manifest"])
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=run_cfg.get("headless", True))
+        launch_kwargs = {"headless": run_cfg.get("headless", True)}
+        chromium_path = find_chromium(run_cfg.get("chromium_path"))
+        if chromium_path:
+            log.info("Using Chromium at %s", chromium_path)
+            launch_kwargs["executable_path"] = chromium_path
+        browser = p.chromium.launch(**launch_kwargs)
         context = browser.new_context(user_agent=run_cfg.get("user_agent"))
         page = context.new_page()
         page.set_default_navigation_timeout(run_cfg["nav_timeout"] * 1000)

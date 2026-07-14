@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import glob
 import logging
 import os
 import random
@@ -13,6 +14,30 @@ from pathlib import Path
 import yaml
 
 log = logging.getLogger("bookbot")
+
+
+def find_chromium(config_path: str | None = None) -> str | None:
+    """Locate a Chromium executable.
+
+    Order: explicit config path -> PLAYWRIGHT_BROWSERS_PATH install ->
+    return None so Playwright uses its own default download.
+    """
+    if config_path and Path(config_path).exists():
+        return config_path
+    base = os.environ.get("PLAYWRIGHT_BROWSERS_PATH")
+    if base and Path(base).exists():
+        patterns = [
+            os.path.join(base, "chromium-*", "chrome-linux", "chrome"),
+            os.path.join(base, "chromium-*", "chrome-mac", "Chromium.app",
+                         "Contents", "MacOS", "Chromium"),
+            os.path.join(base, "chromium-*", "chrome-win", "chrome.exe"),
+            os.path.join(base, "chromium_headless_shell-*", "*", "chrome-headless-shell*"),
+        ]
+        for pat in patterns:
+            hits = sorted(glob.glob(pat))
+            if hits:
+                return hits[-1]
+    return None
 
 
 def setup_logging(verbose: bool = True) -> None:
