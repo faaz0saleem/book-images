@@ -35,14 +35,31 @@ pip install -r requirements.txt
 playwright install chromium
 ```
 
+## Where the book list comes from
+
+SolutionInn's public site is behind **Cloudflare's bot wall** — an automated
+browser gets a "Just a moment…" challenge page instead of the book list, so
+crawling it directly does not work. Run `python diagnose.py` to see this for
+yourself. There are two supported sources (set `crawl.source` in `config.yaml`):
+
+- **`file` (default, reliable):** the bot reads `books.csv` — a CSV with a
+  `title` column, or just one book title per line. Export this list from
+  SolutionInn's own database / admin / sitemap and drop it in. Cloudflare is
+  never involved.
+- **`site` (blocked):** crawl SolutionInn directly. Left in for completeness,
+  but it will not work while the site is behind Cloudflare unless the scraper's
+  IP/user-agent is allow-listed, or an official API is used.
+
 ## Run
 
 ```bash
-python run.py                 # full run using config.yaml
+python run.py                 # full run using config.yaml (file mode by default)
 python run.py --limit 5       # only the first 5 books (good first test)
 python run.py --headed        # watch the browser (useful for debugging)
 python run.py --config my.yaml
 ```
+
+Edit `books.csv` to list the books you want, then run the commands above.
 
 ## Configuration
 

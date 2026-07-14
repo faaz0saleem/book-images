@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from playwright.sync_api import sync_playwright
 
+from .booklist import get_books
 from .capture import capture_from_candidates
-from .crawler import crawl_books
 from .finder import find_pdf_candidates
 from .utils import Manifest, find_chromium, log, polite_sleep, slugify
 
@@ -25,8 +25,8 @@ def run(cfg: dict) -> None:
         page = context.new_page()
         page.set_default_navigation_timeout(run_cfg["nav_timeout"] * 1000)
 
-        # 1) Collect the book list (first to last).
-        books = crawl_books(page, cfg)
+        # 1) Collect the book list (first to last) from the configured source.
+        books = get_books(page, cfg)
         log.info("Collected %d book(s) total", len(books))
 
         # 2) For each book: search -> capture one page image.
