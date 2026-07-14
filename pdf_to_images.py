@@ -45,6 +45,41 @@ def pick_page(page_count: int, page_min: int | None, page_max: int | None) -> in
     return random.randint(lo, hi) - 1
 
 
+def render_random_page(pdf_path, out_dir, fmt: str = "png", zoom: float = 2.0,
+                       page_min: int | None = None, page_max: int | None = None) -> dict:
+    """Render one random page of a single PDF to an image named after the book.
+
+    Returns {'book', 'page', 'image', 'status', 'error'}. Never raises.
+    """
+    from pathlib import Path as _Path
+    pdf_path = _Path(pdf_path)
+    out_dir = _Path(out_dir)
+    book = safe_name(pdf_path.stem)
+    try:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        doc = fitz.open(pdf_path)
+        if doc.page_count == 0:
+            raise ValueError("PDF has no pages")
+        idx = pick_page(doc.page_count, page_min, page_max)
+        pix = doc.load_page(idx).get_pixmap(matrix=fitz.Matrix(zoom, zoom))
+        image = out_dir / f"{book}.{fmt}"
+        pix.save(image)
+        doc.close()
+        return {"book": book, "page": idx + 1, "image": str(image),
+                "status": "ok", "error": ""}
+    except Exception as exc:
+        return {"book": book, "page": None, "image": "",
+                "status": "failed", "error": str(exc)}
+
+
+def process_folder(in_dir, out_dir, fmt: str = "png", zoom: float = 2.0,
+                   page_min: int | None = None, page_max: int | None = None) -> list[dict]:
+    """Render one random page for every PDF in a folder. Returns per-book results."""
+    from pathlib import Path as _Path
+    pdfs = sorted(_Path(in_dir).rglob("*.pdf"))
+    return [render_random_page(p, out_dir, fmt, zoom, page_min, page_max) for p in pdfs]
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="Save one random page image per book PDF.")
     ap.add_argument("--input", default="book_pdfs", help="folder containing the book PDFs")
@@ -72,30 +107,21 @@ def main() -> None:
         print(f"❌ No .pdf files found in '{in_dir}'. Put your book PDFs there and re-run.")
         sys.exit(1)
 
-    out_dir.mkdir(parents=True, exist_ok=True)
     print(f"Found {len(pdfs)} PDF(s) in '{in_dir}'.")
     print(f"Saving images into '{out_dir}/'\n")
 
+    results = process_folder(in_dir, out_dir, args.format, args.zoom,
+                             args.page_min, args.page_max)
+
     ok = 0
     failed: list[str] = []
-    matrix = fitz.Matrix(args.zoom, args.zoom)
-
-    for i, pdf_path in enumerate(pdfs, 1):
-        book = safe_name(pdf_path.stem)
-        try:
-            doc = fitz.open(pdf_path)
-            if doc.page_count == 0:
-                raise ValueError("PDF has no pages")
-            idx = pick_page(doc.page_count, args.page_min, args.page_max)
-            pix = doc.load_page(idx).get_pixmap(matrix=matrix)
-            out_path = out_dir / f"{book}.{args.format}"
-            pix.save(out_path)
-            doc.close()
-            print(f"[{i}/{len(pdfs)}] {book}  ->  page {idx + 1}  ->  {out_path.name}")
+    for i, r in enumerate(results, 1):
+        if r["status"] == "ok":
+            print(f"[{i}/{len(results)}] {r['book']}  ->  page {r['page']}  ->  {Path(r['image']).name}")
             ok += 1
-        except Exception as exc:
-            print(f"[{i}/{len(pdfs)}] {book}  ->   SKIPPED ({exc})")
-            failed.append(book)
+        else:
+            print(f"[{i}/{len(results)}] {r['book']}  ->   SKIPPED ({r['error']})")
+            failed.append(r["book"])
 
     print(f"\n✅ Done. {ok} image(s) saved in '{out_dir}/'.")
     if failed:
