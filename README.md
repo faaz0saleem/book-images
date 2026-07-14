@@ -35,7 +35,32 @@ pip install -r requirements.txt
 playwright install chromium
 ```
 
-## Where the book list comes from
+## Quick path: you already have the book PDFs
+
+If you have the books as PDF files (the simplest, most reliable case — no web
+access, no Cloudflare, no search), use `pdf_to_images.py`. Put the PDFs in a
+folder, and it saves one random page from each as an image named after the book:
+
+```bash
+mkdir -p book_pdfs                 # put your book PDFs in here
+python3 pdf_to_images.py           # writes into "book random page image/"
+```
+
+Result:
+
+```
+book random page image/
+    Introduction to Algorithms 4th Edition.png
+    Campbell Biology.png
+    ...
+```
+
+Options: `--input <folder>`, `--output <folder>`, `--format jpg`, `--zoom 2.5`,
+and `--page-min/--page-max` to restrict which pages can be picked. The image's
+name is the PDF's file name. Only `PyMuPDF` is needed for this
+(`pip install PyMuPDF`) — no browser required.
+
+## Where the book list comes from (web version)
 
 SolutionInn's public site is behind **Cloudflare's bot wall** — an automated
 browser gets a "Just a moment…" challenge page instead of the book list, so
