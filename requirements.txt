@@ -1,0 +1,5 @@
+# Book-images bot dependencies
+playwright>=1.40      # browser automation (crawl SolutionInn + Google search)
+PyMuPDF>=1.24         # render a PDF page to an image (import name: fitz)
+requests>=2.31        # download candidate PDF files
+PyYAML>=6.0           # read config.yaml
