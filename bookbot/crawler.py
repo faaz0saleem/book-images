@@ -43,6 +43,20 @@ def crawl_books(page, cfg: dict) -> list[dict]:
             log.warning("Could not load %s (%s)", url, exc)
             break
         _dismiss_consent(page)
+        # Many listing pages load books with JavaScript after the initial HTML.
+        # Wait for network to settle and scroll to trigger lazy-loading, then
+        # wait for at least one matching link to appear (best effort).
+        try:
+            page.wait_for_load_state("networkidle", timeout=nav_timeout)
+        except Exception:
+            pass
+        for _ in range(4):
+            page.mouse.wheel(0, 4000)
+            page.wait_for_timeout(600)
+        try:
+            page.wait_for_selector(c["book_link_selector"], timeout=5000)
+        except Exception:
+            pass
 
         links = page.query_selector_all(c["book_link_selector"])
         log.info("  found %d book links", len(links))
