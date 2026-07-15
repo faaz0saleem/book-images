@@ -1,0 +1,9 @@
+# Runtime output — captured page images and manifest are not committed
+output/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/

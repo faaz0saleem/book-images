@@ -1,0 +1,55 @@
+# ---------------------------------------------------------------------------
+# Book-images bot configuration
+# Every value here can be tweaked without touching the code.
+# ---------------------------------------------------------------------------
+
+crawl:
+  # Where the book list comes from:
+  #   "file" -> read books_file below (RELIABLE; not blocked by Cloudflare)
+  #   "site" -> crawl SolutionInn directly (blocked by Cloudflare bot wall)
+  source: "file"
+  books_file: "books.csv"   # a CSV with a 'title' column, or one title per line
+
+  # Listing page(s) on SolutionInn to walk (only used when source: "site").
+  # The crawler starts here and follows "next page" links until max_pages.
+  start_url: "https://www.solutioninn.com/books"
+
+  # CSS selectors. SolutionInn's markup can change; if the crawler finds
+  # zero books, open the page in a browser, inspect it, and update these.
+  book_link_selector: "a[href*='/textbook/']"   # each book's link on a listing page
+  title_selector: null                           # optional: title text within the link; null = use link text
+  next_page_selector: "a[rel='next'], a.next, li.next a"
+
+  max_pages: 5          # how many listing pages to walk (safety cap)
+  max_books: 50         # stop after collecting this many books (0 = no limit)
+
+search:
+  engine: "google"      # "google" (as requested) with automatic "duckduckgo" fallback
+  fallback_to_duckduckgo: true
+  # Query template. {title} is replaced with the book title.
+  query_template: "{title} pdf"
+  prefer_filetype_pdf: true    # append "filetype:pdf" to the query
+  max_candidates: 5            # how many result links to try per book
+
+capture:
+  # Pick ONE page between these bounds (1-indexed, inclusive) to screenshot.
+  page_min: 10
+  page_max: 15
+  # "middle" -> page (min+max)//2 ; "random" -> random in range ; or an int.
+  page_pick: "middle"
+  zoom: 2.0             # render scale (2.0 ~= 144 DPI); higher = sharper, bigger file
+  image_format: "png"  # png or jpg
+  max_pdf_mb: 60       # skip candidate downloads larger than this
+
+output:
+  dir: "output"        # one folder per book is created under here
+  manifest: "output/manifest.csv"   # log of what was captured
+
+run:
+  headless: true       # set false to watch the browser while debugging
+  chromium_path: null  # optional: explicit path to a Chromium binary; null = auto-detect
+  request_timeout: 30  # seconds for HTTP downloads
+  nav_timeout: 30      # seconds for page navigations
+  delay_seconds: 4.0   # polite base delay between books
+  delay_jitter: 3.0    # random extra 0..N seconds added to each delay
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36"
